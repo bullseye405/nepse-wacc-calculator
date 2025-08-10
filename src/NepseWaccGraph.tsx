@@ -35,12 +35,12 @@ export default function NepseWaccGraph() {
   // Inputs as strings for controlled inputs
   const [priceInput, setPriceInput] = useState<string>('1000');
   const [qtyInput, setQtyInput] = useState<string>('500');
-  const [stepInput, setStepInput] = useState<string>('10');
+//   const [stepInput, setStepInput] = useState<string>('10');
 
   // Parsed numbers (fallback to 0 if invalid)
   const price = Number(priceInput) || 0;
   const qty = Number(qtyInput) || 0;
-  const step = Number(stepInput) > 0 ? Number(stepInput) : 1;
+//   const step = Number(stepInput) > 0 ? Number(stepInput) : 1;
 
   const brokerageSlabs: BrokerageSlab[] = [
     { limit: 50000, rate: 0.004 },
@@ -72,16 +72,22 @@ export default function NepseWaccGraph() {
     };
   }
 
-  // Calculate table data up to qty input for chart
+  // Calculate table data in multiples of 10, plus extra points beyond maxQty
   function calculateTable(maxQty: number) {
+    const step = 10;
+    // Always show 10 x-axis points based on quantity input
+    const endQty = Math.max(step, Math.ceil(maxQty / step) * step);
+    const totalPoints = 10;
     const rows: TableRow[] = [];
-    for (let q = 1; q <= maxQty; q += step) {
+    for (let i = 0; i < totalPoints; i++) {
+      const q = Math.round((endQty / (totalPoints - 1)) * i);
+      if (q < 5) continue; // start from 5
       const tradeValue = price * q;
       const slab = brokerageSlabs.find((s) => tradeValue <= s.limit)!;
       const brokerage = tradeValue * slab.rate;
       const sebonFee = tradeValue * sebonRate;
       const totalCost = tradeValue + brokerage + sebonFee + dpFee;
-      const costPerShare = totalCost / q;
+      const costPerShare = q > 0 ? totalCost / q : 0;
       rows.push({ qty: q, costPerShare });
     }
     return rows;
@@ -199,7 +205,7 @@ export default function NepseWaccGraph() {
           </div>
 
           {/* Step */}
-          <div className="flex-1 min-w-[140px]">
+          {/* <div className="flex-1 min-w-[140px]">
             <label className="block mb-2 font-semibold text-gray-700">
               Step
             </label>
@@ -210,7 +216,7 @@ export default function NepseWaccGraph() {
               onChange={(e) => setStepInput(e.target.value)}
               className="w-full rounded-xl border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-400"
             />
-          </div>
+          </div> */}
         </div>
 
         {/* Fees summary row */}
